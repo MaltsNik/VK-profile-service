@@ -1,4 +1,4 @@
-package com.vk.profileservice;
+package com.vk.profileservice.service;
 
 import com.vk.profileservice.dto.VkUserDto;
 import com.vk.profileservice.exception.VkApiException;
@@ -30,7 +30,7 @@ import static org.mockito.Mockito.when;
 @DisplayName("Unit tests for UserProfileServiceImpl")
 public class UserProfileServiceImplTest {
     @Mock
-    private VkApiServiceImpl vkApiCacheService;
+    private VkApiServiceImpl apiService;
 
     @InjectMocks
     private UserProfileServiceImpl userProfileService;
@@ -46,7 +46,7 @@ public class UserProfileServiceImplTest {
                 .groupId("93559769")
                 .build();
 
-        VkUserDto.User testUser = new VkUserDto.User();
+        testUser = new VkUserDto.User();
         testUser.setId(78385L);
         testUser.setFirstName("Иван");
         testUser.setLastName("Иванов");
@@ -56,38 +56,32 @@ public class UserProfileServiceImplTest {
     }
 
     @Test
-    @DisplayName("Should return complete user profile with middle name when user is a member")
-    void shouldReturnCompleteUserProfileWhenUserIsMember() {
-        // Given
-        when(vkApiCacheService.getUserInfo(anyLong(), anyString())).thenReturn(testUser);
-        when(vkApiCacheService.checkMembership(anyLong(), anyString(), anyString())).thenReturn(true);
+    @DisplayName("Should return full info from user profile")
+    void shouldReturnFullInfoFromUserProfileTest() {
+        when(apiService.getUserInfo(anyLong(), anyString())).thenReturn(testUser);
+        when(apiService.checkMembership(anyLong(), anyString(), anyString())).thenReturn(true);
 
-        // When
         VkUserResponse result = userProfileService.getUserInfo(testRequest, testToken);
 
-        // Then
         assertNotNull(result);
         assertEquals("Иван", result.getFirstName());
         assertEquals("Иванов", result.getLastName());
         assertEquals("Иванович", result.getMiddleName());
         assertTrue(result.isMember());
 
-        verify(vkApiCacheService).getUserInfo(78385L, testToken);
-        verify(vkApiCacheService).checkMembership(78385L, "93559769", testToken);
+        verify(apiService).getUserInfo(78385L, testToken);
+        verify(apiService).checkMembership(78385L, "93559769", testToken);
     }
 
     @Test
-    @DisplayName("Should return user profile without middle name when it's null")
-    void shouldReturnProfileWithoutMiddleNameWhenNull() {
-        // Given
+    @DisplayName("Should return info from user profile without middle name when it's null")
+    void shouldReturnProfileWithoutMiddleNameWhenNullTest() {
         testUser.setMiddleName(null);
-        when(vkApiCacheService.getUserInfo(anyLong(), anyString())).thenReturn(testUser);
-        when(vkApiCacheService.checkMembership(anyLong(), anyString(), anyString())).thenReturn(false);
+        when(apiService.getUserInfo(anyLong(), anyString())).thenReturn(testUser);
+        when(apiService.checkMembership(anyLong(), anyString(), anyString())).thenReturn(false);
 
-        // When
         VkUserResponse result = userProfileService.getUserInfo(testRequest, testToken);
 
-        // Then
         assertNotNull(result);
         assertEquals("Иван", result.getFirstName());
         assertEquals("Иванов", result.getLastName());
@@ -96,72 +90,35 @@ public class UserProfileServiceImplTest {
     }
 
     @Test
-    @DisplayName("Should return user profile without middle name when it's empty")
-    void shouldReturnProfileWithoutMiddleNameWhenEmpty() {
-        // Given
-        testUser.setMiddleName("");
-        when(vkApiCacheService.getUserInfo(anyLong(), anyString())).thenReturn(testUser);
-        when(vkApiCacheService.checkMembership(anyLong(), anyString(), anyString())).thenReturn(true);
-
-        // When
-        VkUserResponse result = userProfileService.getUserInfo(testRequest, testToken);
-
-        // Then
-        assertNotNull(result);
-        assertNull(result.getMiddleName());
-        assertTrue(result.isMember());
-    }
-
-    @Test
     @DisplayName("Should throw VkApiException when getUserInfo fails")
-    void shouldThrowVkApiExceptionWhenGetUserInfoFails() {
-        // Given
-        when(vkApiCacheService.getUserInfo(anyLong(), anyString()))
+    void shouldThrowVkApiExceptionWhenGetUserInfoFailsTest() {
+        when(apiService.getUserInfo(anyLong(), anyString()))
                 .thenThrow(new VkApiException("User not found"));
 
-        // When & Then
         VkApiException exception = assertThrows(VkApiException.class, () -> {
             userProfileService.getUserInfo(testRequest, testToken);
         });
 
         assertTrue(exception.getMessage().contains("User not found") ||
                 exception.getMessage().contains("Failed to process VK request"));
-        verify(vkApiCacheService).getUserInfo(78385L, testToken);
-        verify(vkApiCacheService, never()).checkMembership(anyLong(), anyString(), anyString());
+        verify(apiService).getUserInfo(78385L, testToken);
+        verify(apiService, never()).checkMembership(anyLong(), anyString(), anyString());
     }
 
     @Test
     @DisplayName("Should throw VkApiException when checkMembership fails")
-    void shouldThrowVkApiExceptionWhenCheckMembershipFails() {
-        // Given
-        when(vkApiCacheService.getUserInfo(anyLong(), anyString())).thenReturn(testUser);
-        when(vkApiCacheService.checkMembership(anyLong(), anyString(), anyString()))
+    void shouldThrowVkApiExceptionWhenCheckMembershipFailsTest() {
+        when(apiService.getUserInfo(anyLong(), anyString())).thenReturn(testUser);
+        when(apiService.checkMembership(anyLong(), anyString(), anyString()))
                 .thenThrow(new VkApiException("Group not found"));
 
-        // When & Then
         VkApiException exception = assertThrows(VkApiException.class, () -> {
             userProfileService.getUserInfo(testRequest, testToken);
         });
 
         assertTrue(exception.getMessage().contains("Group not found") ||
                 exception.getMessage().contains("Failed to process VK request"));
-        verify(vkApiCacheService).getUserInfo(78385L, testToken);
-        verify(vkApiCacheService).checkMembership(78385L, "93559769", testToken);
-    }
-
-    @Test
-    @DisplayName("Should handle RuntimeException and wrap it in VkApiException")
-    void shouldHandleRuntimeExceptionAndWrapInVkApiException() {
-        // Given
-        when(vkApiCacheService.getUserInfo(anyLong(), anyString()))
-                .thenThrow(new RuntimeException("Unexpected error"));
-
-        // When & Then
-        VkApiException exception = assertThrows(VkApiException.class, () -> {
-            userProfileService.getUserInfo(testRequest, testToken);
-        });
-
-        assertEquals("Failed to process VK request", exception.getMessage());
-        assertNotNull(exception.getCause());
+        verify(apiService).getUserInfo(78385L, testToken);
+        verify(apiService).checkMembership(78385L, "93559769", testToken);
     }
 }

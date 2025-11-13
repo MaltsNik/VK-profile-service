@@ -1,14 +1,12 @@
-package com.vk.profileservice.dto;
+package com.vk.profileservice.model.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.Map;
 
 @Data
 @Builder
@@ -30,7 +28,4 @@ public class ErrorResponse {
 
     @JsonProperty("path")
     private String path;
-
-    @Schema(description = "Validation errors")
-    private Map<String, String> validationErrors;// todo -?????????????????????????????????????
 }

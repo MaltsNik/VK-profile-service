@@ -1,0 +1,63 @@
+spring:
+  application:
+    name: vk-profile-service
+
+  cache:
+    type: caffeine
+    caffeine:
+      spec: maximumSize=1000,expireAfterWrite=10m
+    cache-names:
+      - vk-users
+      - vk-memberships
+
+  security:
+    user:
+      name: ${SECURITY_USERNAME:admin}
+      password: ${SECURITY_PASSWORD:admin123}
+
+vk:
+  api:
+    base-url: https://api.vk.com/method
+    version: "5.199"
+    timeout: 5000
+    max-retries: 3
+    retry-delay: 2000
+
+camel:
+  springboot:
+    name: vk-profile-service
+    main-run-controller: true
+  component:
+    http:
+      connect-timeout: 5000
+      socket-timeout: 5000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+  packages-to-scan: com.vk.profileservice
+
+logging:
+  level:
+    com.example.vkintegration: INFO
+    org.apache.camel: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+
+server:
+  port: 8080
+  error:
+    include-message: always
+    include-binding-errors: always

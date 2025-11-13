@@ -1,4 +1,4 @@
-package com.vk.profileservice.model;
+package com.vk.profileservice.model.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -30,5 +30,5 @@ public class VkUserResponse {
 
     @JsonProperty("member")
     @Schema(description = "Indicates if user is a member of the specified group", example = "true")
-    private Boolean member;
+    private boolean member;
 }

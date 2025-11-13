@@ -1,55 +1,48 @@
-package com.vk.profileservice.service;
+package com.vk.profileservice.service.impl;
 
-import com.vk.profileservice.dto.UserProfileResponse;
-import com.vk.profileservice.dto.vk.VkUser;
-import com.vk.profileservice.exception.UserNotFoundException;
+import com.vk.profileservice.dto.VkUserDto;
+import com.vk.profileservice.exception.VkApiException;
 import com.vk.profileservice.model.request.VkUserRequest;
 import com.vk.profileservice.model.response.VkUserResponse;
+import com.vk.profileservice.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.camel.ProducerTemplate;
 import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class UserProfileService {
+public class UserProfileServiceImpl implements UserService {
 
-    private final ProducerTemplate producerTemplate;
+    private final VkApiServiceImpl vkApiCacheService;
 
-
-    public VkUserResponse getUserProfile(VkUserRequest request, String vkServiceToken) {
+    @Override
+    public VkUserResponse getUserInfo(VkUserRequest request, String vkServiceToken) {
         log.info("Processing user profile request for userId: {}, groupId: {}",
                 request.getUserId(), request.getGroupId());
+        try {
+            VkUserDto.User user = vkApiCacheService.getUserInfo(request.getUserId(), vkServiceToken);
+            boolean isMember = vkApiCacheService.checkMembership(
+                    request.getUserId(), request.getGroupId(), vkServiceToken);
 
-        if (vkServiceToken == null || vkServiceToken.isBlank()) {
-            throw new IllegalArgumentException("VK service token отсутствует или пустой");
+            VkUserResponse.VkUserResponseBuilder responseBuilder = VkUserResponse.builder()
+                    .firstName(user.getFirstName())
+                    .lastName(user.getLastName())
+                    .member(isMember);
+
+            if (user.getMiddleName() != null && !user.getMiddleName().isEmpty()) {
+                responseBuilder.middleName(user.getMiddleName());
+            }
+            VkUserResponse response = responseBuilder.build();
+            log.info("Successfully processed request for userId: {}", request.getUserId());
+
+            return response;
+        } catch (Exception e) {
+            log.error("Error processing VK request: {}", e.getMessage(), e);
+            if (e instanceof VkApiException) {
+                throw (VkApiException) e;
+            }
+            throw new VkApiException("Failed to process VK request", e);
         }
-
-        // Получаем информацию о пользователе
-        VkUser user = vkApiClient.getUserInfo(request.getUserId(), vkServiceToken);
-
-        if (user == null) {
-            throw new UserNotFoundException(request.getUserId());
-        }
-
-        // Проверяем членство в группе
-        boolean isMember = vkApiClient.isGroupMember(
-                request.getGroupId(),
-                request.getUserId(),
-                vkServiceToken
-        );
-
-        UserProfileResponse response = UserProfileResponse.builder()
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
-                .middleName(user.getMiddleName())
-                .member(isMember)
-                .build();
-
-        log.info("Successfully processed user profile request for userId: {}", request.getUserId());
-
-        return response;
     }
 }
-

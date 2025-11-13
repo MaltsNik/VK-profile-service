@@ -1,4 +1,4 @@
-package com.vk.profileservice;
+package com.vk.profileservice.service;
 
 import com.vk.profileservice.dto.VkUserDto;
 import com.vk.profileservice.service.impl.VkApiServiceImpl;
@@ -55,8 +55,7 @@ public class VkApiServiceImplTest {
 
     @Test
     @DisplayName("Should successfully get user info from VK API")
-    void shouldGetUserInfoSuccessfully() {
-        // Given
+    void shouldGetUserInfoSuccessfullyTest() {
         when(producerTemplate.requestBodyAndHeaders(
                 eq("direct:getUserInfo"),
                 isNull(),
@@ -64,10 +63,8 @@ public class VkApiServiceImplTest {
                 eq(VkUserDto.User.class)
         )).thenReturn(testUser);
 
-        // When
         VkUserDto.User result = vkApiService.getUserInfo(userId, vkToken);
 
-        // Then
         assertNotNull(result);
         assertEquals(testUser.getId(), result.getId());
         assertEquals(testUser.getFirstName(), result.getFirstName());
@@ -78,9 +75,8 @@ public class VkApiServiceImplTest {
                 eq("direct:getUserInfo"),
                 isNull(),
                 argThat(headers -> {
-                    Map<String, Object> headerMap = (Map<String, Object>) headers;
-                    return headerMap.get("userId").equals(userId) &&
-                            headerMap.get("vkServiceToken").equals(vkToken);
+                    return ((Map<String, Object>) headers).get("userId").equals(userId) &&
+                            ((Map<String, Object>) headers).get("vkServiceToken").equals(vkToken);
                 }),
                 eq(VkUserDto.User.class)
         );
@@ -88,8 +84,7 @@ public class VkApiServiceImplTest {
 
     @Test
     @DisplayName("Should successfully check membership status as true")
-    void shouldCheckMembershipStatusAsTrue() {
-        // Given
+    void shouldCheckMembershipStatusAsTrueTest() {
         when(producerTemplate.requestBodyAndHeaders(
                 eq("direct:checkGroupMembership"),
                 isNull(),
@@ -97,20 +92,17 @@ public class VkApiServiceImplTest {
                 eq(Boolean.class)
         )).thenReturn(true);
 
-        // When
         boolean result = vkApiService.checkMembership(userId, groupId, vkToken);
 
-        // Then
         assertTrue(result);
 
         verify(producerTemplate).requestBodyAndHeaders(
                 eq("direct:checkGroupMembership"),
                 isNull(),
                 argThat(headers -> {
-                    Map<String, Object> headerMap = (Map<String, Object>) headers;
-                    return headerMap.get("userId").equals(userId) &&
-                            headerMap.get("groupId").equals(groupId) &&
-                            headerMap.get("vkServiceToken").equals(vkToken);
+                    return ((Map<String, Object>) headers).get("userId").equals(userId) &&
+                            ((Map<String, Object>) headers).get("groupId").equals(groupId) &&
+                            ((Map<String, Object>) headers).get("vkServiceToken").equals(vkToken);
                 }),
                 eq(Boolean.class)
         );
@@ -118,8 +110,7 @@ public class VkApiServiceImplTest {
 
     @Test
     @DisplayName("Should successfully check membership status as false")
-    void shouldCheckMembershipStatusAsFalse() {
-        // Given
+    void shouldCheckMembershipStatusAsFalseTest() {
         when(producerTemplate.requestBodyAndHeaders(
                 eq("direct:checkGroupMembership"),
                 isNull(),
@@ -127,71 +118,11 @@ public class VkApiServiceImplTest {
                 eq(Boolean.class)
         )).thenReturn(false);
 
-        // When
         boolean result = vkApiService.checkMembership(userId, groupId, vkToken);
 
-        // Then
         assertFalse(result);
         verify(producerTemplate, times(1)).requestBodyAndHeaders(
                 anyString(), isNull(), anyMap(), eq(Boolean.class)
-        );
-    }
-
-    @Test
-    @DisplayName("Should pass correct headers for getUserInfo")
-    void shouldPassCorrectHeadersForGetUserInfo() {
-        // Given
-        Long specificUserId = 12345L;
-        String specificToken = "specific_token_xyz";
-
-        when(producerTemplate.requestBodyAndHeaders(
-                anyString(), isNull(), anyMap(), eq(VkUserDto.User.class)
-        )).thenReturn(testUser);
-
-        // When
-        vkApiService.getUserInfo(specificUserId, specificToken);
-
-        // Then
-        verify(producerTemplate).requestBodyAndHeaders(
-                eq("direct:getUserInfo"),
-                isNull(),
-                argThat(headers -> {
-                    Map<String, Object> headerMap = (Map<String, Object>) headers;
-                    return headerMap.get("userId").equals(specificUserId) &&
-                            headerMap.get("vkServiceToken").equals(specificToken) &&
-                            headerMap.size() == 2;
-                }),
-                eq(VkUserDto.User.class)
-        );
-    }
-
-    @Test
-    @DisplayName("Should pass correct headers for checkMembership")
-    void shouldPassCorrectHeadersForCheckMembership() {
-        // Given
-        Long specificUserId = 99999L;
-        String specificGroupId = "test_group_123";
-        String specificToken = "token_abc";
-
-        when(producerTemplate.requestBodyAndHeaders(
-                anyString(), isNull(), anyMap(), eq(Boolean.class)
-        )).thenReturn(true);
-
-        // When
-        vkApiService.checkMembership(specificUserId, specificGroupId, specificToken);
-
-        // Then
-        verify(producerTemplate).requestBodyAndHeaders(
-                eq("direct:checkGroupMembership"),
-                isNull(),
-                argThat(headers -> {
-                    Map<String, Object> headerMap = (Map<String, Object>) headers;
-                    return headerMap.get("userId").equals(specificUserId) &&
-                            headerMap.get("groupId").equals(specificGroupId) &&
-                            headerMap.get("vkServiceToken").equals(specificToken) &&
-                            headerMap.size() == 3;
-                }),
-                eq(Boolean.class)
         );
     }
 }

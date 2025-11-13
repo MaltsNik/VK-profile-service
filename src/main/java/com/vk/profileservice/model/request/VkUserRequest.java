@@ -2,6 +2,7 @@ package com.vk.profileservice.model.request;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
@@ -14,7 +15,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Schema(description = "VK user information request")
-public class VkMembershipDto {
+public class VkUserRequest {
 
     @NotNull(message = "User ID is required")
     @Positive(message = "User ID must be positive")
@@ -22,10 +23,9 @@ public class VkMembershipDto {
     @Schema(description = "VK user identifier", example = "78385", required = true)
     private Long userId;
 
-    @NotNull(message = "Group ID is required")
-    @Positive(message = "Group ID must be positive")
+    @NotBlank(message = "Group ID is required")
     @JsonProperty("group_id")
-    @Schema(description = "VK group identifier", example = "93559769", required = true)
-    private Long groupId;
+    @Schema(description = "VK group identifier", example = "public93559769", required = true)
+    private String groupId;
 }
 
