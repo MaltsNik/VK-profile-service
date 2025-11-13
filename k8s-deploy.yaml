@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vk-profile-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vk-profile-service
+  template:
+    metadata:
+      labels:
+        app: vk-profile-service
+    spec:
+      containers:
+        - name: vk-profile-service
+          image: vk-profile-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SECURITY_USERNAME
+              value: "admin"
+            - name: SECURITY_PASSWORD
+              value: "admin123"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vk-profile-service
+spec:
+  type: NodePort
+  selector:
+    app: vk-profile-service
+  ports:
+    - port: 8080
+      targetPort: 8080
+      nodePort: 30080
