@@ -1,4 +1,4 @@
-# VK Profile Service
+<img width="1771" height="700" alt="image" src="https://github.com/user-attachments/assets/0f5d4ab7-3fea-4125-b6c3-a9bb6c88608a" />
 
 ## RESTful cloud-native сервис для получения информации о пользователях ВКонтакте и проверки их членства в группах.
 
@@ -51,3 +51,4 @@
   "middle_name": "Петрович",
   "member": true
 }
+
